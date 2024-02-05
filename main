@@ -1,0 +1,74 @@
+#!/bin/bash
+
+if [[ -z "$@" ]] ; then echo "Need arguments." ; exit 1 ; fi
+      
+while [ $# -gt 0 ]
+do    
+  case "$(tr '[:upper:]' '[:lower:]'<<<$1)" in
+    -remote)
+      remote="$2"
+      shift
+    ;;
+    -attachment)
+      attachment="$2"
+      shift
+    ;;
+    -to)
+      to="$2"
+      shift
+    ;;
+    -from)
+      from="$2"
+      shift
+    ;;
+   -subject)
+      subject="$2"
+      shift
+    ;;
+   -body)
+      body="$2"
+      shift
+    ;;
+  esac
+  shift
+done
+
+if [ -z "${remote}" ] || [ -z "${attachment}" ] || [ -z "${to}" ] || [ -z "${from}" ] || [ -z "${subject}" ] || [ -z "${body}" ]
+then
+  echo "All arguments must be provided."
+  exit 1
+fi
+
+attachmentBase64=$(base64 < ${attachment})
+attachmentFilename=$(basename ${attachment})
+
+rawEml=''
+rawEml+="To: ${to}"$'\n'
+rawEml+="From: ${from}"$'\n'
+rawEml+="Subject: ${subject}"$'\n'
+rawEml+="MIME-Version: 1.0"$'\n'
+rawEml+="Content-Type: multipart/mixed; boundary=\"X-=-=-=-text boundary\""$'\n'
+#rawEml+=$'\n'
+#rawEml+="--X-=-=-=-text boundary"$'\n'
+#rawEml+="Content-Type: text/plain"$'\n'
+#rawEml+=$'\n'
+#rawEml+="${body}"$'\n'
+#rawEml+=$'\n'
+rawEml+="--X-=-=-=-text boundary"$'\n'
+rawEml+="Content-Type: text/csv; name=\"${attachmentFilename}\""$'\n'
+rawEml+="Content-Transfer-Encoding: base64"$'\n'
+rawEml+="Content-Disposition: attachment; filename=\"${attachmentFilename}\""$'\n'
+rawEml+=$'\n'
+rawEml+="${attachmentBase64}"$'\n'
+rawEml+="--X-=-=-=-text boundary"$'\n'
+
+
+{ echo "ehlo mecrla001.middys.local";
+ echo "mail from: ${from}";
+ echo "rcpt to: ${to}";
+ echo "data";
+ echo "${rawEml}";
+ echo ".";
+ echo "quit";
+ sleep 1;
+} | telnet $remote 25
