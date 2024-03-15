@@ -29,6 +29,9 @@ do
       body="$2"
       shift
     ;;
+   -starttls|-tls)
+      tls=1
+    ;;
   esac
   shift
 done
@@ -84,4 +87,4 @@ fi
  echo ".";
  echo "quit";
  sleep 1;
-} | telnet $remote 25
+} | ${command}
