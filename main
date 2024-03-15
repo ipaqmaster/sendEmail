@@ -33,14 +33,17 @@ do
   shift
 done
 
-if [ -z "${remote}" ] || [ -z "${attachment}" ] || [ -z "${to}" ] || [ -z "${from}" ] || [ -z "${subject}" ] || [ -z "${body}" ]
+if [ -z "${remote}" ] || [ -z "${to}" ] || [ -z "${from}" ] || [ -z "${subject}" ] || [ -z "${body}" ]
 then
-  echo "All arguments must be provided."
+  echo "Core arguments must be provided: -remote -to -from -subject -body"
   exit 1
 fi
 
-attachmentBase64=$(base64 < ${attachment})
-attachmentFilename=$(basename ${attachment})
+if [ -n "${attachment}" ]
+then
+  attachmentBase64=$(base64 < ${attachment})
+  attachmentFilename=$(basename ${attachment})
+fi
 
 rawEml=''
 rawEml+="To: ${to}"$'\n'
@@ -54,14 +57,24 @@ rawEml+="Content-Type: multipart/mixed; boundary=\"X-=-=-=-text boundary\""$'\n'
 #rawEml+=$'\n'
 #rawEml+="${body}"$'\n'
 #rawEml+=$'\n'
-rawEml+="--X-=-=-=-text boundary"$'\n'
-rawEml+="Content-Type: text/csv; name=\"${attachmentFilename}\""$'\n'
-rawEml+="Content-Transfer-Encoding: base64"$'\n'
-rawEml+="Content-Disposition: attachment; filename=\"${attachmentFilename}\""$'\n'
-rawEml+=$'\n'
-rawEml+="${attachmentBase64}"$'\n'
-rawEml+="--X-=-=-=-text boundary"$'\n'
+if [ -n "${attachment}" ]
+then
+  rawEml+="--X-=-=-=-text boundary"$'\n'
+  rawEml+="Content-Type: text/csv; name=\"${attachmentFilename}\""$'\n'
+  rawEml+="Content-Transfer-Encoding: base64"$'\n'
+  rawEml+="Content-Disposition: attachment; filename=\"${attachmentFilename}\""$'\n'
+  rawEml+=$'\n'
+  rawEml+="${attachmentBase64}"$'\n'
+  rawEml+="--X-=-=-=-text boundary"$'\n'
+fi
 
+if [ -n "${tls}" ]
+then
+  echo "Using openssl and -starttls smtp + -crlf"
+  command="openssl s_client -connect ${remote}:25 -starttls smtp -crlf"
+else
+  command="telnet ${remote} 25"
+fi
 
 { echo "ehlo mecrla001.middys.local";
  echo "mail from: ${from}";
