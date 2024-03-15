@@ -74,7 +74,7 @@ fi
 if [ -n "${tls}" ]
 then
   echo "Using openssl and -starttls smtp + -crlf"
-  command="openssl s_client -connect ${remote}:25 -starttls smtp -crlf"
+  command="openssl s_client -connect ${remote}:25 -starttls smtp -crlf -verify_return_error"
 else
   command="telnet ${remote} 25"
 fi
