@@ -10,15 +10,19 @@ This is a small bash script for testing relaying on mailservers without having t
 ### Required
 
 `-remote`
+
   The SMTP remote to connect to
 
 `-from`
+
   The 'From:' address
 
 `-to`
+
   The 'To:' address
 
 `-subject`
+
   The 'Subject:' line
 
 `-body`
